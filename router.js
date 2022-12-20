@@ -1,6 +1,16 @@
 const express = require("express");
 const { Router } = express;
 
+const { Server: HttpServer } = require('http')
+const { Server: IOServer } = require('socket.io')
+const app = express()
+const httpServer = new HttpServer(app)
+const io = new IOServer(httpServer)
+
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado')
+})
+
 const data = [
     {id: 1,title: "Cebolla", thumbnail: "https://LaDireccion", precio:5000},
     {id: 2,title: "Lechuga",thumbnail: "https://LaDireccion2", precio:6000},
@@ -12,7 +22,9 @@ const apiRouter = new Router();
 
 apiRouter.get('/', (req, res)=>{
 
-    return res.render("index", data)
+    //return res.render("index", data)
+    return res.json(mainData)
+
 });
 
 apiRouter.get('/:id', async (req, res)=>{
@@ -21,7 +33,9 @@ apiRouter.get('/:id', async (req, res)=>{
     if(!idToFind){
         return res.status("404").json({error: 'Producto no encontrado'})
     }
-    res.send(idToFind)
+
+    return res.json(idToFind)
+
 });
 
 apiRouter.post('/', (req, res)=>{
@@ -39,7 +53,11 @@ apiRouter.post('/', (req, res)=>{
 
     mainData.push(newData)
 
-    return res.render("layouts/productLayout", mainData)
+    io.sockets.emit('newProduct', newData)
+
+    
+      return res.status(201).json(newData)
+    //return res.render("layouts/productLayout", mainData)
     
 });
 
